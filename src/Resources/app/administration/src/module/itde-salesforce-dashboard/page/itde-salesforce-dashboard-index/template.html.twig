@@ -1,0 +1,261 @@
+{% block itde_salesforce_dashboard_index %}
+<sw-page class="itde-salesforce-dashboard">
+
+    <template #smart-bar-header>
+        Salesforce Sync Dashboard
+    </template>
+
+    <template #smart-bar-actions>
+        <div style="display: flex; align-items: center; gap: 6px; margin-right: 8px;">
+            <label style="font-size: 13px; color: #52667a; cursor: pointer;">
+                <input type="checkbox" v-model="autoRefreshEnabled" style="margin-right: 4px;" />
+                Auto-refresh ({{ autoRefreshSeconds }}s)
+            </label>
+        </div>
+
+        <sw-button :is-loading="isLoading" size="small" variant="ghost" @click="loadStats">
+            <sw-icon name="regular-redo" small /> Refresh
+        </sw-button>
+
+        <sw-button :is-loading="syncCustomersLoading" size="small" variant="ghost" @click="onSyncAllCustomers">
+            Sync All Customers
+        </sw-button>
+
+        <sw-button :is-loading="syncOrdersLoading" size="small" variant="ghost" @click="onSyncAllOrders">
+            Sync All Orders
+        </sw-button>
+    </template>
+
+    <template #content>
+        <sw-card-view>
+
+            {% block itde_salesforce_dashboard_error %}
+            <sw-alert v-if="error" variant="error">{{ error }}</sw-alert>
+            {% endblock %}
+
+            {% block itde_salesforce_dashboard_stats %}
+            <sw-card title="Customer Sync — Today" :is-loading="isLoading">
+                <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #2e7d32;">{{ successToday }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">✓ Synced today</div>
+                    </div>
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #c62828;">{{ errorToday }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">✗ Failed today</div>
+                    </div>
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #0070D2;">{{ totalAllTime }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">∑ Total all time</div>
+                    </div>
+                    <div style="text-align: center; min-width: 180px;">
+                        <div style="font-size: 1rem; font-weight: 600; color: #444;">{{ lastPollAt }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">↓ Last inbound poll</div>
+                    </div>
+                </div>
+            </sw-card>
+            {% endblock %}
+
+            {% block itde_salesforce_dashboard_order_stats %}
+            <sw-card title="Order Sync — Overview" :is-loading="isLoading">
+                <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #2e7d32;">{{ orderSuccessToday }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">✓ Synced today</div>
+                    </div>
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #c62828;">{{ orderErrorTotal }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">✗ Failed (all time)</div>
+                    </div>
+                    <div style="text-align: center; min-width: 120px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #888;">{{ orderNeverSynced }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">⊘ Never synced</div>
+                    </div>
+                </div>
+            </sw-card>
+            {% endblock %}
+
+            {% block itde_salesforce_dashboard_logs %}
+            <sw-card title="Recent Sync Logs" :is-loading="isLoading">
+
+                {% block itde_salesforce_dashboard_log_tabs %}
+                <div style="display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 16px;">
+                    <button type="button" @click="activeLogTab = 'customers'" :style="{ padding: '8px 20px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: activeLogTab === 'customers' ? '700' : '400', color: activeLogTab === 'customers' ? '#189eff' : '#52667a', borderBottom: activeLogTab === 'customers' ? '2px solid #189eff' : '2px solid transparent', marginBottom: '-2px', fontSize: '14px' }">Customer Logs</button>
+                    <button type="button" @click="activeLogTab = 'orders'"    :style="{ padding: '8px 20px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: activeLogTab === 'orders'    ? '700' : '400', color: activeLogTab === 'orders'    ? '#189eff' : '#52667a', borderBottom: activeLogTab === 'orders'    ? '2px solid #189eff' : '2px solid transparent', marginBottom: '-2px', fontSize: '14px' }">Order Logs</button>
+                </div>
+                {% endblock %}
+
+                {% block itde_salesforce_dashboard_log %}
+                <div v-show="activeLogTab === 'customers'">
+
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <label style="font-size: 13px; color: #52667a;">Status:</label>
+                        <select v-model="customerStatusFilter" style="padding: 4px 8px; border: 1px solid #d1d9e0; border-radius: 4px; font-size: 13px;">
+                            <option value="">All</option>
+                            <option value="success">Success</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <button v-if="customerStatusFilter" type="button" @click="customerStatusFilter = ''" style="font-size: 12px; color: #189eff; background: none; border: none; cursor: pointer;">✕ Clear</button>
+                        <span style="margin-left: auto; font-size: 12px; color: #888;">
+                            {{ customerTotal }} total &nbsp;|&nbsp; Page {{ customerPage }} / {{ customerTotalPages }}
+                        </span>
+                    </div>
+
+                    <sw-data-grid
+                        v-if="recentLogs.length > 0"
+                        :data-source="recentLogs"
+                        :columns="[
+                            { property: 'status',              label: 'Status',     width: '100px' },
+                            { property: 'syncedAt',            label: 'Synced At',  width: '180px' },
+                            { property: 'durationMs',          label: 'Duration',   width: '90px'  },
+                            { property: 'salesforceContactId', label: 'SF Contact', width: '160px' },
+                            { property: 'errorMessage',        label: 'Error'                       },
+                            { property: 'actions',             label: '',           width: '120px' },
+                        ]"
+                        :show-selection="false"
+                        :show-settings="false"
+                        :allow-bulk-edit="false"
+                        identifier="itde-salesforce-sync-log-grid"
+                    >
+                        <template #column-status="{ item }">
+                            <sw-label :variant="statusVariant(item.status)" size="small" appearance="pill">
+                                {{ item.status }}
+                            </sw-label>
+                        </template>
+                        <template #column-syncedAt="{ item }">{{ formatDate(item.syncedAt) }}</template>
+                        <template #column-durationMs="{ item }">{{ formatDuration(item.durationMs) }}</template>
+                        <template #column-errorMessage="{ item }">
+                            <span
+                                v-if="item.errorMessage"
+                                @click="showErrorModal(item.errorMessage)"
+                                style="color: #c62828; font-size: 0.8rem; cursor: pointer; text-decoration: underline dotted;"
+                                title="Click to view full error"
+                            >{{ item.errorMessage.length > 60 ? item.errorMessage.substring(0, 60) + '…' : item.errorMessage }}</span>
+                            <span v-else style="color: #aaa;">—</span>
+                        </template>
+                        <template #column-actions="{ item }">
+                            <sw-button v-if="item.status === 'error'" size="small" variant="ghost" :is-loading="retryingId === item.customerId" @click="retrySync(item.customerId)">Retry</sw-button>
+                        </template>
+                    </sw-data-grid>
+                    <sw-empty-state v-else-if="!isLoading" title="No customer sync logs" description="No entries match the current filter." icon="regular-user" />
+
+                    <div v-if="customerTotalPages > 1" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px;">
+                        <button type="button" @click="customerPrevPage" :disabled="customerPage <= 1" style="padding: 4px 12px; border: 1px solid #d1d9e0; border-radius: 4px; cursor: pointer; background: #fff; font-size: 13px;" :style="{ opacity: customerPage <= 1 ? 0.4 : 1 }">‹ Prev</button>
+                        <span style="font-size: 13px; color: #52667a;">Page {{ customerPage }} of {{ customerTotalPages }}</span>
+                        <button type="button" @click="customerNextPage" :disabled="customerPage >= customerTotalPages" style="padding: 4px 12px; border: 1px solid #d1d9e0; border-radius: 4px; cursor: pointer; background: #fff; font-size: 13px;" :style="{ opacity: customerPage >= customerTotalPages ? 0.4 : 1 }">Next ›</button>
+                    </div>
+
+                </div>
+                {% endblock %}
+
+                {% block itde_salesforce_dashboard_order_log %}
+                <div v-show="activeLogTab === 'orders'">
+
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <label style="font-size: 13px; color: #52667a;">Status:</label>
+                        <select v-model="orderStatusFilter" style="padding: 4px 8px; border: 1px solid #d1d9e0; border-radius: 4px; font-size: 13px;">
+                            <option value="">All</option>
+                            <option value="success">Success</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <button v-if="orderStatusFilter" type="button" @click="orderStatusFilter = ''" style="font-size: 12px; color: #189eff; background: none; border: none; cursor: pointer;">✕ Clear</button>
+                        <span style="margin-left: auto; font-size: 12px; color: #888;">
+                            {{ orderTotal }} total &nbsp;|&nbsp; Page {{ orderPage }} / {{ orderTotalPages }}
+                        </span>
+                    </div>
+
+                    <sw-data-grid
+                        v-if="recentOrderLogs.length > 0"
+                        :data-source="recentOrderLogs"
+                        :columns="[
+                            { property: 'status',       label: 'Status',    width: '100px' },
+                            { property: 'orderNumber',  label: 'Order #',   width: '120px' },
+                            { property: 'customerName', label: 'Customer',  width: '180px' },
+                            { property: 'syncedAt',     label: 'Synced At', width: '180px' },
+                            { property: 'sfLink',       label: 'SF Link',   width: '100px' },
+                            { property: 'errorMessage', label: 'Error'                      },
+                            { property: 'actions',      label: '',          width: '120px' },
+                        ]"
+                        :show-selection="false"
+                        :show-settings="false"
+                        :allow-bulk-edit="false"
+                        identifier="itde-salesforce-order-sync-log-grid"
+                    >
+                        <template #column-status="{ item }">
+                            <sw-label :variant="statusVariant(item.status)" size="small" appearance="pill">
+                                {{ item.status }}
+                            </sw-label>
+                        </template>
+                        <template #column-syncedAt="{ item }">{{ formatDate(item.syncedAt) }}</template>
+                        <template #column-sfLink="{ item }">
+                            <a v-if="item.sfLink" :href="item.sfLink" target="_blank" rel="noopener" style="color: #0070D2; font-size: 0.85rem;">View ↗</a>
+                            <span v-else style="color: #aaa;">—</span>
+                        </template>
+                        <template #column-errorMessage="{ item }">
+                            <span
+                                v-if="item.errorMessage"
+                                @click="showErrorModal(item.errorMessage)"
+                                style="color: #c62828; font-size: 0.8rem; cursor: pointer; text-decoration: underline dotted;"
+                                title="Click to view full error"
+                            >{{ item.errorMessage.length > 60 ? item.errorMessage.substring(0, 60) + '…' : item.errorMessage }}</span>
+                            <span v-else style="color: #aaa;">—</span>
+                        </template>
+                        <template #column-actions="{ item }">
+                            <sw-button v-if="item.status === 'error'" size="small" variant="ghost" :is-loading="retryingOrderId === item.id" @click="retryOrderSync(item.id)">Retry</sw-button>
+                        </template>
+                    </sw-data-grid>
+                    <sw-empty-state v-else-if="!isLoading" title="No order sync logs" description="No entries match the current filter." icon="regular-shopping-bag" />
+
+                    <div v-if="orderTotalPages > 1" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px;">
+                        <button type="button" @click="orderPrevPage" :disabled="orderPage <= 1" style="padding: 4px 12px; border: 1px solid #d1d9e0; border-radius: 4px; cursor: pointer; background: #fff; font-size: 13px;" :style="{ opacity: orderPage <= 1 ? 0.4 : 1 }">‹ Prev</button>
+                        <span style="font-size: 13px; color: #52667a;">Page {{ orderPage }} of {{ orderTotalPages }}</span>
+                        <button type="button" @click="orderNextPage" :disabled="orderPage >= orderTotalPages" style="padding: 4px 12px; border: 1px solid #d1d9e0; border-radius: 4px; cursor: pointer; background: #fff; font-size: 13px;" :style="{ opacity: orderPage >= orderTotalPages ? 0.4 : 1 }">Next ›</button>
+                    </div>
+
+                </div>
+                {% endblock %}
+
+            </sw-card>
+            {% endblock %}
+
+        </sw-card-view>
+    </template>
+
+    {% block itde_salesforce_dashboard_error_modal %}
+    <sw-modal
+        v-if="errorModal"
+        title="Error Details"
+        size="600px"
+        @modal-close="errorModal = false"
+    >
+        <pre style="white-space: pre-wrap; word-break: break-word; font-size: 0.82rem; color: #c62828; background: #fff5f5; padding: 12px; border-radius: 4px; border: 1px solid #fdd;">{{ errorModalText }}</pre>
+        <template #modal-footer>
+            <sw-button variant="primary" size="small" @click="errorModal = false">Close</sw-button>
+        </template>
+    </sw-modal>
+    {% endblock %}
+
+    {% block itde_salesforce_dashboard_orders_modal %}
+    <sw-modal v-if="syncOrdersModal" title="Sync All Orders" size="400px" @modal-close="syncOrdersModal = false">
+        <sw-loader v-if="syncOrdersLoading" />
+        <sw-alert v-else-if="syncOrdersError" variant="error">{{ syncOrdersError }}</sw-alert>
+        <sw-alert v-else variant="success"><strong>{{ syncOrdersTotal }}</strong> order(s) queued. Workers will sync them to Salesforce in the background.</sw-alert>
+        <template #modal-footer>
+            <sw-button variant="primary" size="small" @click="syncOrdersModal = false">Close</sw-button>
+        </template>
+    </sw-modal>
+    {% endblock %}
+
+    {% block itde_salesforce_dashboard_customers_modal %}
+    <sw-modal v-if="syncCustomersModal" title="Sync All Customers" size="400px" @modal-close="syncCustomersModal = false">
+        <sw-loader v-if="syncCustomersLoading" />
+        <sw-alert v-else-if="syncCustomersError" variant="error">{{ syncCustomersError }}</sw-alert>
+        <sw-alert v-else variant="success"><strong>{{ syncCustomersTotal }}</strong> customer(s) queued. Workers will sync them to Salesforce in the background.</sw-alert>
+        <template #modal-footer>
+            <sw-button variant="primary" size="small" @click="syncCustomersModal = false">Close</sw-button>
+        </template>
+    </sw-modal>
+    {% endblock %}
+
+</sw-page>
+{% endblock %}

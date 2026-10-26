@@ -1,0 +1,63 @@
+<div class="itde-sf-field-mapping-editor">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <span style="font-size: 13px; color: #52667a; font-weight: 600;">Customer → Salesforce Contact field mapping</span>
+        <div style="display: flex; gap: 8px;">
+            <sw-button size="x-small" variant="ghost" @click="resetToDefaults">Reset to defaults</sw-button>
+            <sw-button size="x-small" variant="ghost" @click="addRow">+ Add row</sw-button>
+        </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+            <tr style="background: #f5f7fa;">
+                <th style="text-align: left; padding: 6px 10px; color: #52667a; font-weight: 600; border-bottom: 1px solid #e0e0e0; width: 40%;">Shopware field</th>
+                <th style="text-align: left; padding: 6px 10px; color: #52667a; font-weight: 600; border-bottom: 1px solid #e0e0e0; width: 45%;">Salesforce field (API name)</th>
+                <th style="width: 15%; border-bottom: 1px solid #e0e0e0;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(row, index) in rows" :key="index" style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 5px 10px;">
+                    <select
+                        v-model="row.shopwareField"
+                        @change="onRowChange"
+                        style="width: 100%; padding: 4px 6px; border: 1px solid #d1d9e0; border-radius: 4px; font-size: 13px; background: #fff;"
+                    >
+                        <option value="">— select —</option>
+                        <option
+                            v-for="opt in shopwareFieldOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                        >{{ opt.label }}</option>
+                    </select>
+                </td>
+                <td style="padding: 5px 10px;">
+                    <input
+                        v-model="row.sfField"
+                        type="text"
+                        placeholder="e.g. Email"
+                        @input="onRowChange"
+                        style="width: 100%; padding: 4px 6px; border: 1px solid #d1d9e0; border-radius: 4px; font-size: 13px;"
+                    />
+                </td>
+                <td style="padding: 5px 10px; text-align: center;">
+                    <button
+                        type="button"
+                        @click="removeRow(index)"
+                        style="background: none; border: none; cursor: pointer; color: #c62828; font-size: 15px; line-height: 1;"
+                        title="Remove row"
+                    >✕</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p style="font-size: 11px; color: #aaa; margin-top: 8px;">
+        Salesforce field names are case-sensitive API names, e.g. <code>Email</code>, <code>FirstName</code>, <code>MailingCity</code>.
+        Custom fields end with <code>__c</code>.
+        Leave empty to use the defaults.
+    </p>
+
+</div>
+

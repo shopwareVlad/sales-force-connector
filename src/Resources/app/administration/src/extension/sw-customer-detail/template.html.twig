@@ -1,0 +1,22 @@
+{% block sw_customer_detail %}
+    {% parent %}
+{% endblock %}
+
+{% block sw_customer_detail_smart_bar_actions %}
+    {% parent %}
+
+    {% block sw_customer_detail_salesforce_open_button %}
+    <sw-button
+        v-if="sfLink"
+        variant="ghost"
+        size="small"
+        :link="sfLink"
+        target="_blank"
+        rel="noopener"
+    >
+        <sw-icon name="regular-external-link" small />
+        Open in Salesforce
+    </sw-button>
+    {% endblock %}
+{% endblock %}
+

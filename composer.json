@@ -1,0 +1,46 @@
+{
+  "name": "itde/salesforce-connector",
+  "description": "Shopware 6 Salesforce Connector",
+  "type": "shopware-platform-plugin",
+  "license": "proprietary",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "ItDelight",
+      "role": "Company"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "ItDe\\SalesforceConnector\\": "src/"
+    }
+  },
+  "require": {
+    "shopware/core": ">=6.6.0",
+    "shopware/storefront": ">=6.6.0",
+    "shopware/administration": ">=6.6.0",
+    "ext-openssl": "*",
+    "ext-json": "*"
+  },
+  "extra": {
+    "shopware-plugin-class": "ItDe\\SalesforceConnector\\ItDeSalesforceConnector",
+    "plugin-icon": "src/Resources/config/plugin.png",
+    "copyright": "(c) by ItDe",
+    "label": {
+      "de-DE": "Salesforce Connector",
+      "en-GB": "Salesforce Connector"
+    },
+    "manufacturerLink": {
+      "de-DE": "https://itdelight.com",
+      "en-GB": "https://itdelight.com"
+    },
+    "description": {
+      "de-DE": "Salesforce Connector",
+      "en-GB": "Salesforce Connector"
+    },
+    "supportLink": {
+      "de-DE": "https://itdelight.com",
+      "en-GB": "https://itdelight.com"
+    }
+  }
+}

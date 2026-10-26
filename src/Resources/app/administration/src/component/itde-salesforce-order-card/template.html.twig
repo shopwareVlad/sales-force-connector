@@ -1,0 +1,77 @@
+{% block itde_salesforce_order_card %}
+<sw-card
+    class="itde-salesforce-order-card"
+    title="Salesforce Sync"
+    :is-loading="isLoading"
+>
+    {% block itde_salesforce_order_card_status %}
+    <div class="itde-salesforce-order-card__status-row" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+
+        <div>
+            <div style="font-size: 11px; color: #52667a; margin-bottom: 4px;">Status</div>
+            <sw-label
+                v-if="status"
+                :variant="statusVariant"
+                appearance="pill"
+            >
+                {{ status === 'success' ? '✓ Success' : '✗ Error' }}
+            </sw-label>
+            <span v-else style="color: #999;">Never synced</span>
+        </div>
+
+        <div>
+            <div style="font-size: 11px; color: #52667a; margin-bottom: 4px;">Last sync</div>
+            <span>{{ formatDate(syncedAt) }}</span>
+        </div>
+
+        <div>
+            <div style="font-size: 11px; color: #52667a; margin-bottom: 4px;">SF Opportunity ID</div>
+            <a
+                v-if="sfLink"
+                :href="sfLink"
+                target="_blank"
+                rel="noopener"
+                style="font-family: monospace; font-size: 12px;"
+            >
+                {{ sfOpportunityId }}
+            </a>
+            <span v-else-if="sfOpportunityId" style="font-family: monospace; font-size: 12px;">{{ sfOpportunityId }}</span>
+            <span v-else style="color: #999;">—</span>
+        </div>
+
+        <div style="margin-left: auto;">
+            <sw-button
+                size="small"
+                :is-loading="isSyncing"
+                @click="onSyncNow"
+            >
+                Push to Salesforce
+            </sw-button>
+        </div>
+
+    </div>
+    {% endblock %}
+
+    {% block itde_salesforce_order_card_error %}
+    <sw-alert
+        v-if="errorMessage && status === 'error'"
+        variant="error"
+        style="margin-top: 12px;"
+    >
+        {{ errorMessage }}
+    </sw-alert>
+    {% endblock %}
+
+    {% block itde_salesforce_order_card_load_error %}
+    <sw-alert
+        v-if="loadError"
+        variant="warning"
+        style="margin-top: 8px;"
+    >
+        {{ loadError }}
+    </sw-alert>
+    {% endblock %}
+
+</sw-card>
+{% endblock %}
+

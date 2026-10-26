@@ -1,0 +1,12 @@
+{% block sw_order_detail_general %}
+    {% parent %}
+
+    {% block sw_order_detail_general_salesforce %}
+    <itde-salesforce-order-card
+        v-if="order && order.id"
+        :order="order"
+        style="margin-top: 0;"
+    />
+    {% endblock %}
+{% endblock %}
+

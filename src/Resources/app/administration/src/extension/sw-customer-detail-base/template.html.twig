@@ -1,0 +1,12 @@
+{% block sw_customer_detail_base %}
+    {% parent %}
+
+    {% block sw_customer_detail_base_salesforce %}
+    <itde-salesforce-customer-card
+        v-if="customer && customer.id"
+        :customer="customer"
+        style="margin-top: 0;"
+    />
+    {% endblock %}
+{% endblock %}
+

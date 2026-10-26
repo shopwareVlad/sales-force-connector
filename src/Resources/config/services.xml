@@ -1,0 +1,216 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false"/>
+
+        <!-- ── Infrastructure ──────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Service\ConfigProvider">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\SalesforceJwtAuthService">
+            <argument type="service" id="http_client"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\SalesforceTokenProvider">
+            <argument type="service" id="cache.app"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceJwtAuthService"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\SalesforceHttpClient">
+            <argument type="service" id="http_client"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceTokenProvider"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+
+        <!-- ── Domain services ─────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Service\CustomerContactMapper">
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\OrderOpportunityMapper"/>
+
+        <service id="ItDe\SalesforceConnector\Service\SalesforceConnectionTester">
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Service\OrderLineItemMapper"/>
+
+        <service id="ItDe\SalesforceConnector\Service\OpportunityLineItemSyncer">
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\OrderLineItemMapper"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <!-- ── Entity definitions ──────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Entity\SyncLog\SyncLogDefinition">
+            <tag name="shopware.entity.definition" entity="itde_salesforce_sync_log"/>
+        </service>
+
+        <!-- ── Scheduled task ──────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\SyncAllCustomersTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\SyncAllCustomersTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\SyncAllOrdersTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\SyncAllOrdersTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\RetryFailedSyncsTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\RetryFailedSyncsTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\RetryFailedOrderSyncsTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\RetryFailedOrderSyncsTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\CleanupSyncLogTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\CleanupSyncLogTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\PollSalesforceChangesTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\ScheduledTask\PollSalesforceChangesTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <!-- ── Commands ────────────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Command\SalesforceTestCommand">
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceConnectionTester"/>
+            <tag name="console.command"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Command\SyncAllCustomersCommand">
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="console.command"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Command\SyncAllOrdersCommand">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="console.command"/>
+        </service>
+
+        <!-- ── Message queue ───────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\MessageQueue\Handler\SyncCustomerMessageHandler">
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="itde_salesforce_sync_log.repository"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\CustomerContactMapper"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\MessageQueue\Handler\InboundSyncContactMessageHandler">
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\MessageQueue\Handler\SyncOrderMessageHandler">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceApi"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\OrderOpportunityMapper"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\OpportunityLineItemSyncer"/>
+            <argument type="service" id="logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <!-- ── Event subscribers ───────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Subscriber\CustomerSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Subscriber\OrderSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!-- ── Controllers ─────────────────────────────────────────────────── -->
+
+        <service id="ItDe\SalesforceConnector\Controller\Api\SalesforceConnectTestController" public="true">
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceConnectionTester"/>
+            <tag name="controller.service_arguments"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Controller\Api\SalesforceInboundWebhookController" public="true">
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="controller.service_arguments"/>
+        </service>
+
+        <service id="ItDe\SalesforceConnector\Controller\Api\SyncLogController" public="true">
+            <argument type="service" id="itde_salesforce_sync_log.repository"/>
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\ConfigProvider"/>
+            <argument type="service" id="ItDe\SalesforceConnector\Service\SalesforceTokenProvider"/>
+            <tag name="controller.service_arguments"/>
+        </service>
+
+    </services>
+</container>

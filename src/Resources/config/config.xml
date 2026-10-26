@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title>Salesforce API (JWT Bearer)</title>
+
+        <input-field type="text">
+            <name>loginUrl</name>
+            <label>Salesforce Login / My Domain URL (aud)</label>
+            <required>true</required>
+        </input-field>
+
+        <input-field type="text">
+            <name>clientId</name>
+            <label>Salesforce Client ID (Consumer Key)</label>
+            <required>true</required>
+        </input-field>
+
+        <input-field type="text">
+            <name>username</name>
+            <label>Salesforce Username</label>
+            <required>true</required>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>jwtPrivateKeyPem</name>
+            <label>JWT Private Key (PEM)</label>
+            <helpText>Paste the PRIVATE key contents (-----BEGIN PRIVATE KEY----- ...)</helpText>
+            <required>true</required>
+        </input-field>
+
+        <input-field type="text">
+            <name>apiVersion</name>
+            <label>Salesforce API Version</label>
+            <helpText>e.g. v60.0 — leave empty to use the default (v60.0)</helpText>
+            <required>false</required>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>conflictResolution</name>
+            <label>Conflict Resolution</label>
+            <helpText>Shopware wins: always push Shopware data to Salesforce. Salesforce wins: only create new Contacts, never overwrite existing SF data.</helpText>
+            <required>false</required>
+            <options>
+                <option>
+                    <id>shopware_wins</id>
+                    <name>
+                        <en-GB>Shopware wins (always sync from Shopware → Salesforce)</en-GB>
+                        <de-DE>Shopware gewinnt (immer von Shopware → Salesforce synchronisieren)</de-DE>
+                    </name>
+                </option>
+                <option>
+                    <id>salesforce_wins</id>
+                    <name>
+                        <en-GB>Salesforce wins (only create new Contacts, skip existing)</en-GB>
+                        <de-DE>Salesforce gewinnt (nur neue Kontakte erstellen, vorhandene überspringen)</de-DE>
+                    </name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="bool">
+            <name>inboundPollEnabled</name>
+            <label>Enable Salesforce → Shopware polling sync</label>
+            <label lang="de-DE">Salesforce → Shopware Polling-Sync aktivieren</label>
+            <helpText>When enabled, the plugin polls Salesforce every 15 minutes for recently changed Contacts and updates the matching Shopware customers.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>fieldMapping</name>
+            <label>Customer → Contact field mapping (JSON)</label>
+            <helpText>Advanced: override the default field mapping as a JSON object, e.g. {"email":"Email","firstName":"FirstName"}. Use the visual editor in the plugin config page instead.</helpText>
+            <required>false</required>
+        </input-field>
+    </card>
+
+    <card>
+        <title>Order Sync (Shopware → Salesforce Opportunity)</title>
+        <title lang="de-DE">Bestellsynchronisierung (Shopware → Salesforce Opportunity)</title>
+
+        <input-field type="bool">
+            <name>orderSyncEnabled</name>
+            <label>Enable automatic order sync (scheduled)</label>
+            <label lang="de-DE">Automatische Bestellsynchronisierung aktivieren (geplant)</label>
+            <helpText>When enabled, all orders are automatically pushed to Salesforce as Opportunities on a daily schedule.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, werden alle Bestellungen täglich automatisch als Opportunities zu Salesforce übertragen.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="multi-select">
+            <name>orderSyncStatuses</name>
+            <label>Order statuses to sync</label>
+            <label lang="de-DE">Zu synchronisierende Bestellstatus</label>
+            <helpText>Select which order statuses to include in the sync. Leave empty to sync all statuses.</helpText>
+            <helpText lang="de-DE">Wähle die Bestellstatus, die synchronisiert werden sollen. Leer lassen, um alle Status zu synchronisieren.</helpText>
+            <options>
+                <option>
+                    <id>open</id>
+                    <name>Open</name>
+                    <name lang="de-DE">Offen</name>
+                </option>
+                <option>
+                    <id>in_progress</id>
+                    <name>In progress</name>
+                    <name lang="de-DE">In Bearbeitung</name>
+                </option>
+                <option>
+                    <id>completed</id>
+                    <name>Done</name>
+                    <name lang="de-DE">Abgeschlossen</name>
+                </option>
+                <option>
+                    <id>cancelled</id>
+                    <name>Cancelled</name>
+                    <name lang="de-DE">Abgebrochen</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+</config>

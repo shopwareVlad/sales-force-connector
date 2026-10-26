@@ -1,0 +1,32 @@
+{% block itde_salesforce_sync_orders_button %}
+<div style="display: inline-flex;">
+    <sw-button
+        :is-loading="isLoading"
+        variant="ghost"
+        size="small"
+        @click="onSyncAll"
+    >
+        Sync All Orders
+    </sw-button>
+
+    <sw-modal
+        v-if="showModal"
+        title="Sync All Orders to Salesforce"
+        size="400px"
+        @modal-close="onClose"
+    >
+        <sw-alert variant="info">
+            <strong>Synchronization has been started.</strong><br>
+            All orders will be synced to Salesforce in the background. You can continue working normally.
+        </sw-alert>
+
+        <sw-alert v-if="error" variant="error" style="margin-top: 8px;">
+            {{ error }}
+        </sw-alert>
+
+        <template #modal-footer>
+            <sw-button variant="primary" @click="onClose">Close</sw-button>
+        </template>
+    </sw-modal>
+</div>
+{% endblock %}

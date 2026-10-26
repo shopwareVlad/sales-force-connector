@@ -1,0 +1,73 @@
+{% block itde_salesforce_test_button %}
+<div style="display: inline-flex;">
+
+    <sw-button
+        :is-loading="isLoading"
+        size="small"
+        @click="onTest"
+    >
+        Test Connection
+    </sw-button>
+
+    <sw-modal
+        v-if="showModal"
+        title="Salesforce: Connection Test"
+        size="500px"
+        @modal-close="onClose"
+    >
+        <template #default>
+
+            {% block itde_salesforce_test_button_modal_loading %}
+            <div v-if="isLoading" class="itde-salesforce-test-button__loading">
+                <sw-loader />
+            </div>
+            {% endblock %}
+
+            {% block itde_salesforce_test_button_modal_results %}
+            <div
+                v-if="!isLoading && testResult"
+                class="itde-salesforce-test-button__results"
+            >
+                <div
+                    v-for="step in testResult.steps"
+                    :key="step.name"
+                    class="itde-salesforce-test-button__step"
+                >
+                    <div class="itde-salesforce-test-button__step-header">
+                        <span
+                            class="itde-salesforce-test-button__step-icon"
+                            :class="step.passed ? 'is--passed' : 'is--failed'"
+                        >
+                            {{ step.passed ? '✓' : '✗' }}
+                        </span>
+                        <strong>{{ step.name }}</strong>
+                    </div>
+                    <p class="itde-salesforce-test-button__step-message">{{ step.message }}</p>
+                </div>
+
+                <div
+                    class="itde-salesforce-test-button__summary"
+                    :class="testResult.success ? 'is--success' : 'is--error'"
+                >
+                    <template v-if="testResult.success">
+                        ✓ All checks passed — connector is ready to sync.
+                    </template>
+                    <template v-else>
+                        ✗ Some checks failed — see details above.
+                    </template>
+                </div>
+            </div>
+            {% endblock %}
+
+        </template>
+
+        <template #modal-footer>
+            <sw-button @click="onClose">
+                Close
+            </sw-button>
+        </template>
+    </sw-modal>
+
+</div>
+{% endblock %}
+
